@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Cville Building Permit Density</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.52.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.52.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+
+        <style>
+                .map-overlay {
+                    font:bold 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+                    color: rgba(255, 255, 255, 0.85);
+                    position: absolute;
+                    width: 25%;
+                    top: 0;
+                    left: 0;
+                    padding: 10px;
+                }
+                
+                .map-overlay .map-overlay-inner {
+                    background-color: rgba(80, 73, 73, 0.5);
+                    box-shadow:0 2px 4px rgba(0, 0, 0, 0.20);
+                    border-radius: 3px;
+                    padding: 10px;
+                    margin-bottom: 10px;
+                }
+                
+                .map-overlay label {
+                    display: block;
+                    margin: 0 0 10px;
+                }
+                
+                .map-overlay input {
+                    background-color: transparent;
+                    display: inline-block;
+                    width: 100%;
+                    position: relative;
+                    margin: 0;
+                    cursor: ew-resize;
+                }
+                </style>
+
+<div id='map'></div>
+
+<div class='map-overlay top'>
+        <div class='map-overlay-inner'>
+            <label>Layer Opacity: <span id='slider-value'>100%</span></label>
+            <input id='slider' type='range' min='0' max='100' step='0' value='100' />
+        </div>
+</div>
+
+<script>
+
+mapboxgl.accessToken = 'pk.eyJ1IjoicmFuZHJld3dhbGtlciIsImEiOiJjanFxendwbmkwOXRrM3h0MzV6bnZsOXczIn0.zERP2avlAwV7Goz3lzCV2g';
+
+var mapRotation = true;
+
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v9',
+    //style: 'mapbox://styles/examples/cj68bstx01a3r2rndlud0pwpv', // no labels
+    center: [-78.482195, 38.037042],
+    zoom: 14,
+    pitch: 50
+});
+
+map.addControl(new mapboxgl.NavigationControl());
+
+var slider = document.getElementById('slider');
+var sliderValue = document.getElementById('slider-value');
+
+function rotateCamera(timestamp) {
+
+    if (mapRotation) {
+
+    // clamp the rotation between 0 -360 degrees
+    // Divide timestamp by 100 to slow rotation to ~10 degrees / sec
+    map.rotateTo((timestamp / 100) % 360, {duration: 0});
+    // Request the next frame of the animation.
+    requestAnimationFrame(rotateCamera);
+
+    }
+
+}
+
+map.on('load', function () {
+
+    rotateCamera(0);
+
+    map.addLayer({
+        'id': 'hex',
+        'type': 'fill-extrusion',
+        'interactive': true,
+        'source': {
+            'type': 'geojson',
+            'data': './hex5sumval.geojson'
+        },
+        'paint': {
+            'fill-extrusion-color': {
+                'property': 'height',
+                'stops': [
+                            [0, "white"],
+                            [50, "#fee0d2"],
+                            [100,"#fc9272"],
+                            [300,"#ef3b2c"],
+                            [634, "#99000d"]
+                        ]
+            },
+            'fill-extrusion-height': ['get', 'height'],
+            'fill-extrusion-opacity': 1.0
+        }
+    });
+
+    
+
+    slider.addEventListener('input', function(e) {
+        // Adjust the layer opacity
+        map.setPaintProperty('hex', 'fill-extrusion-opacity', parseInt(e.target.value, 10) / 100);
+
+        // Value indicator
+        sliderValue.textContent = e.target.value + '%';
+    });
+
+});
+
+map.on('mousedown', function () {
+
+    mapRotation = false;
+
+});
+
+
+</script>
+
+</body>
+</html>
+
